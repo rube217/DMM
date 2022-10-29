@@ -1,4 +1,4 @@
-import sqlalchemy as sql, sqlalchemy.ext.declarative as declarative, sqlalchemy.orm as orm
+import sqlalchemy as sql, sqlalchemy.ext.declarative as declarative, sqlalchemy.orm as orm, pydoc
 
 #cx_Oracle.init_oracle_client(lib_dir=r"C:/Oracle_64/product/11.2.0/client_1/BIN/")
 
