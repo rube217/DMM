@@ -2,7 +2,7 @@ import sqlalchemy.orm as orm, pandas as pd, sqlalchemy as sql, time, datetime as
 import database, models, cx_Oracle
 
 
-cx_Oracle.init_oracle_client(lib_dir=r"C:/Oracle_64/product/11.2.0/client_1/BIN/")
+##cx_Oracle.init_oracle_client(lib_dir=r"F:/oracle/product/BIN/")
 
 def create_database():
     return database.Base.metadata.create_all(bind=database.engine_datawarehouse)
@@ -120,6 +120,7 @@ def  update_NE_table(df_file,df_database, conn = database.engine_datawarehouse):
                 connection.execute(sql_sentence)
                 connection.execute('DROP TABLE Update_temp;')
                 connection.close()
+                print('finaliza update NE_table')
                 return(True)
     except ValueError:
         print(ValueError)

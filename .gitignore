@@ -1,2 +1,5 @@
 MMRepoMain.log
-__pycache__/  
+__pycache__/
+build/
+dist/
+main.spec
