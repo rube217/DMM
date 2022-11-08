@@ -6,7 +6,7 @@ MM_DATABASE_URL = "sqlite://///10.240.160.176\g$\Data/MMRepo.db3"
 
 ADMS_DATABASE_URL = "mssql+pyodbc://EpsaReportes:cmXoasys2@10.238.109.61\OASYSHDB:20010/ADMS_QueryEngine?driver=SQL Server"
 
-# GIS_DATABASE_URL = "oracle+cx_oracle://RDJARAMILLO:cmXoasys17@PV10262/arcgis"
+GIS_DATABASE_URL = "oracle+cx_oracle://RDJARAMILLO:Berlin22+@PV10262/arcgis"
 
 engine_datawarehouse = sql.create_engine(
     MM_DATABASE_URL, 
@@ -21,11 +21,6 @@ engine_adms = sql.create_engine(
     ADMS_DATABASE_URL
     )
 
-# engine_adms = sql.create_engine(
-#     ADMS_DATABASE_URL
-# )
-
-# engine_datawarehouse = sql.create_engine(
-#     GIS_DATABASE_URL
-# )
-
+engine_gis = sql.create_engine(
+    GIS_DATABASE_URL
+)
