@@ -14,11 +14,14 @@ def main():
 
     NE_Executions,NE_Executions_database = services.extract_NE_data(exporter_list)
 
+
+
     services.update_NE_table(NE_Executions,NE_Executions_database)
-
     services.insert_NE_table(NE_Executions,NE_Executions_database)
-
+    
     services.update_adms_tables()
+
+    services.update_gis_jobs(NE_Executions,NE_Executions_database)
 
 
 

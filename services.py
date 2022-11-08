@@ -1,4 +1,4 @@
-import sqlalchemy.orm as orm, pandas as pd, sqlalchemy as sql, time, datetime as dt, re
+import sqlalchemy.orm as orm, pandas as pd, sqlalchemy as sql, time, datetime as dt, re, numpy
 import database, models, cx_Oracle
 
 
@@ -66,6 +66,7 @@ def extract_NE_data(exporter_list, conn = database.engine_datawarehouse):    ## 
             FROM Network_Exporter_Executions; """
             ,conn
             ,coerce_float=False)
+        #NE_Executions_db.Executed = NE_Executions_db.Executed.fillna(False)
 
         return NE_Executions,NE_Executions_db
     except ValueError:
@@ -87,23 +88,23 @@ def insert_NE_table(df_file,df_database, conn = database.engine_datawarehouse): 
         print(ValueError)
 
 def  update_NE_table(df_file,df_database, conn = database.engine_datawarehouse): ## Función para actualizar los tiempos de ejecución de los registros ya insertados
-    try:    
+    try:
+
+        df_database.ReceivedTime = pd.to_datetime(df_database.ReceivedTime)
+        df_database.GisJobId = df_database.GisJobId.astype(str)
+
+        Update = df_database[df_database.Executed==False].merge(df_file,
+                                                    on=['Version','FeederList','KindExecution','ReceivedTime','Machine'],
+                                                    how='inner',
+                                                    suffixes=['_old',None]).rename(columns= {'Id':'Id2','Id_old':'Id'})
+
+        Update[Update.Executed!=Update.Executed_old].to_sql('Update_temp',
+                                                            if_exists='replace',
+                                                            con=conn,
+                                                            index=False)
         with conn.connect() as connection:
+            
             with connection.begin():
-
-                df_database.ReceivedTime = pd.to_datetime(df_database.ReceivedTime)
-                df_database.GisJobId = df_database.GisJobId.astype(str)
-
-                Update = df_database[df_database.Executed==False].merge(df_file,
-                                                            on=['Version','FeederList','KindExecution','ReceivedTime','Machine'],
-                                                            how='inner',
-                                                            suffixes=['_old',None]).rename(columns= {'Id':'Id2','Id_old':'Id'})
-
-                Update[Update.Executed!=Update.Executed_old].to_sql('Update_temp',
-                                                                    if_exists='replace',
-                                                                    con=conn,
-                                                                    index=False)
-
                 sql_sentence = """
                 UPDATE Network_Exporter_Executions as NE
                     SET Executed = (select t.Executed 
@@ -213,3 +214,32 @@ def update_adms_tables(engine = database.engine_datawarehouse,adms_df = read_ADM
                 print('Actualizando',i)
                 adms_df[i].to_sql(i, index=False,index_label='Id', if_exists='append', con=connection)
         connection.close()
+
+def update_gis_jobs(df_file,df_databse,engine_datawarehouse = database.engine_datawarehouse, engine_gis = database.engine_gis):
+    gis_jobs_NE = list(pd.concat([df_databse.GisJobId, df_file.GisJobId]).unique())
+    splits = numpy.array_split(gis_jobs_NE, round(len(gis_jobs_NE)/900))
+
+
+    with engine_datawarehouse.connect() as connection:
+
+            with connection.begin():
+                print('Borrando Gis_Jobs')
+                connection.execute('DELETE FROM GIS_Jobs;')
+                print('Actualizando Gis_Jobs')
+
+            connection.close()
+    for i in range(len(splits)):
+        gis_jobs = pd.read_sql("""
+            SELECT DISTINCT jj.JOB_NAME as JobName, JJSX.job_id as Id ,  v.owner || '.' || v.name AS Version, jj.DESCRIPTION, jjs.STEP_NAME as CurrentStatus, '' as Notes, jj.OWNED_BY as Owner 
+                FROM GRED_ADMINIS.JTX_STEP_STATUS jjsx 
+                LEFT JOIN GRED_ADMINIS.JTX_JOB_STEP jjs ON jjs.STEP_ID  = JJSX.step_id
+                LEFT JOIN GRED_ADMINIS.JTX_JOBS jj ON jj.JOB_ID = jjsx.JOB_ID 
+                LEFT JOIN sde.versions v ON v.name LIKE '%'|| jj.JOB_NAME ||'%' 
+                WHERE jjsx.STATUS = 'S'
+                and jj.JOB_NAME IN {} 
+                """.format(tuple(splits[i])), engine_gis)
+        gis_jobs = gis_jobs[-(gis_jobs.id.duplicated(keep='first'))]
+        gis_jobs.to_sql("GIS_Jobs", con=engine_datawarehouse, index=False, index_label='JobName',if_exists='append')
+        print(i)
+
+    print('Gis Jobs Actualizado')
