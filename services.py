@@ -98,30 +98,21 @@ def  update_NE_table(df_file,df_database, conn = database.engine_datawarehouse):
                                                     how='inner',
                                                     suffixes=['_old',None]).rename(columns= {'Id':'Id2','Id_old':'Id'})
 
-        Update[Update.Executed!=Update.Executed_old].to_sql('Update_temp',
-                                                            if_exists='replace',
-                                                            con=conn,
-                                                            index=False)
-        with conn.connect() as connection:
-            
+        Update = Update[Update.Executed!=Update.Executed_old]
+
+        with conn.connect() as connection: 
             with connection.begin():
-                sql_sentence = """
-                UPDATE Network_Exporter_Executions as NE
-                    SET Executed = (select t.Executed 
-                                            FROM Update_temp as t
-                                            WHERE  t.Id = NE.Id),
-                    ExecutionTime = (select t.ExecutionTime 
-                                            FROM Update_temp as t
-                                            WHERE  t.Id = NE.Id)
-                    WHERE
-                        EXISTS(
-                            SELECT * FROM Update_temp as t
-                                WHERE t.Id = NE.Id);
-                """
-                connection.execute(sql_sentence)
-                connection.execute('DROP TABLE Update_temp;')
+                metadata_NEE = sql.MetaData()
+
+                NEE = sql.Table("Network_Exporter_Executions", metadata_NEE, autoload_with=conn)
+                
+                for i,x in Update.iterrows():
+                    print(x.Id,x.ExecutionTime, x.Executed)
+                    update_sentence = NEE.update().where(NEE.c.Id == x.Id).values(ExecutionTime=x.ExecutionTime , Executed = x.Executed)
+
+                    connection.execute(update_sentence)
                 connection.close()
-                print('finaliza update NE_table')
+                print('Finaliza update NE_table')
                 return(True)
     except ValueError:
         print(ValueError)
