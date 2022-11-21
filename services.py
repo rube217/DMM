@@ -99,6 +99,10 @@ def  update_NE_table(df_file,df_database, conn = database.engine_datawarehouse):
                                                     suffixes=['_old',None]).rename(columns= {'Id':'Id2','Id_old':'Id'})
 
         Update = Update[Update.Executed!=Update.Executed_old]
+        Update.to_sql('Update_temp',
+                    if_exists='replace',
+                    con = conn,
+                    index=False)
 
         with conn.connect() as connection: 
             with connection.begin():
@@ -111,9 +115,9 @@ def  update_NE_table(df_file,df_database, conn = database.engine_datawarehouse):
                     update_sentence = NEE.update().where(NEE.c.Id == x.Id).values(ExecutionTime=x.ExecutionTime , Executed = x.Executed)
 
                     connection.execute(update_sentence)
-                connection.close()
-                print('Finaliza update NE_table')
-                return(True)
+            connection.close()
+        print('Finaliza update NE_table')
+        return(True)
     except ValueError:
         print(ValueError)
 
@@ -208,7 +212,7 @@ def update_adms_tables(engine = database.engine_datawarehouse,adms_df = read_ADM
 
 def update_gis_jobs(df_file,df_databse,engine_datawarehouse = database.engine_datawarehouse, engine_gis = database.engine_gis):
     gis_jobs_NE = list(pd.concat([df_databse.GisJobId, df_file.GisJobId]).unique())
-    splits = numpy.array_split(gis_jobs_NE, round(len(gis_jobs_NE)/900))
+    splits = numpy.array_split(gis_jobs_NE, round(len(gis_jobs_NE)/700))
 
 
     with engine_datawarehouse.connect() as connection:
