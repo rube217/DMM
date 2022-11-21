@@ -2,29 +2,6 @@ import pyodbc, time
 def GetOption():
     print('Por favor ingrese el nombre del punto SCADA a eliminar el comando en progreso (nombre de la señal en la ventana de control)\n')
     signal_name = input()
-    # if signal_name == '':
-    #     print("""¿Desea eliminar todos los comandos en progreso del sistema? \n 1) Si\n 2) No""")
-    #     option = input()
-    #     if option == '1' or option.lower() == 'si':
-    #         print("""¿Estas demente? \n 1) Si\n 2) No""")
-    #         confirm = input()
-    #         if confirm == '1' or confirm.lower()=='si':
-    #             print("Por favor di en voz alta que si confirmas")
-    #             time.sleep(10)
-    #             print("Pues no mi ciela, eso solo lo puede hacer GTO, te toca copiar punto por punto ;)")
-    #             # if keyboard.is_pressed('Esc'):
-    #             #     sys.exit(0)
-    #             # if keyboard.is_pressed('ENTER'):
-    #             #     GetOption()
-    #     else:
-    #         print('Pues yo creo que sí')
-    # #             print('Presiona Esc para salir, para continuar presione Enter')
-    # #             if keyboard.is_pressed('Esc'):
-    # #                 sys.exit(0)
-    # #             if keyboard.is_pressed('ENTER'):
-    # #                 GetOption()
-    # else:
-    #     return signal_name
     return signal_name
     
 
